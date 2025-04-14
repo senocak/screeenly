@@ -6,3 +6,4 @@
 uploads/screenshots/**
 .gradle
 .gradle/**
+frontend/node_modules

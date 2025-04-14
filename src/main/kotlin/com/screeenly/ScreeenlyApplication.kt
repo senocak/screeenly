@@ -10,15 +10,29 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
+import org.springframework.context.annotation.Configuration
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.Duration
 import java.util.UUID
+
+@Configuration
+class WebConfig : WebMvcConfigurer {
+    override fun addCorsMappings(registry: CorsRegistry) {
+        registry.addMapping("/**")
+            .allowedOrigins("http://localhost:3000")
+            .allowedMethods("POST")
+            .allowedHeaders("*")
+            .allowCredentials(true)
+    }
+}
 
 @ConfigurationProperties(prefix = "screeenly")
 class ScreeenlyProperties(
@@ -44,6 +58,7 @@ data class Screenshot(
     val fullPage: Boolean = false
 ) {
     var path: String? = null
+    var bytes: ByteArray? = null
 }
 
 @SpringBootApplication
@@ -134,6 +149,7 @@ class ScreeenlyApplication(
             Files.copy(screenshotFile.toPath(), Paths.get(fullPath))
             return data.also { it: Screenshot ->
                 it.path = fullPath
+                it.bytes = screenshotFile.readBytes()
             }
         } finally {
             driver.quit()
