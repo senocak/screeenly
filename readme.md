@@ -1,9 +1,6 @@
 <p align="center"><img width="295" src="https://raw.githubusercontent.com/stefanzweifel/screeenly/master/readme-image.png" alt=""></p>
 
 <p align="center">
-<a href="https://github.com/stefanzweifel/screeenly/actions?query=workflow%3ATests">
-<img src="https://github.com/stefanzweifel/screeenly/workflows/Tests/badge.svg" alt="">
-</a>
 <a href="https://github.com/stefanzweifel/screeenly/blob/master/LICENSE" title="License">
     <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square" alt="License">
 </a>
@@ -14,71 +11,97 @@
 
 
 screeenly is an open source web application which lets users create website screenshots through a simple API.
-It's built with [Laravel](http://laravel.com).
-
-The latest version is hosted on [screeenly.com](http://screeenly.com). You can follow us on [Twitter](https://twitter.com/screeenly)
+It's built with [Kotlin](https://kotlinlang.org/) and [Spring Boot](https://spring.io/projects/spring-boot).
 
 ---
 
-☝️ A completely new version of screeenly has recently been released: [https://3.screeenly.com](https://3.screeenly.com).
+## Features
 
-The app has been rebuilt from the ground up. Its API now can also convert websites into PDFs, return the rendered HTML of a website. This now also works for your own provided HTML code. 
-In addition, you can now update a lot more settings; like pixel density or wether images should be loaded.
+- Create screenshots of any website through a simple REST API
+- Customize screenshot dimensions (width and height)
+- Capture full-page screenshots (not just the viewport)
+- Add delay before capturing to allow for page rendering
+- Configurable user agent and timeouts
 
-**The new app requires a paid subscription. The subscription covers server costs and maintenance.**
+## API Usage
 
-The open source version of screeenly (this repo right here) which is hosted on [http://screeenly.com](http://screeenly.com) will remain available for the forseeable future. If anything should change and you've registered on screeenly.com, you will receive a notice. 
+The API accepts POST requests to `/screenshot` with a JSON body:
 
-The repository itself will soon get updates for Laravel 7 and Laravel 8.
+```json
+{
+  "url": "https://github.com/senocak/screeenly",
+  "width": 1920,
+  "height": 1080,
+  "delay": 1,
+  "fullPage": true
+}
+```
 
----
+Parameters:
+- `url` (required): The website URL to capture
+- `width` (optional): Screenshot width in pixels (default: 1024)
+- `height` (optional): Screenshot height in pixels (default: 768)
+- `delay` (optional): Wait time in seconds before taking the screenshot
+- `fullPage` (optional): When true, captures the entire page, not just the viewport
 
-## Documentation and more
+The API returns a JSON response with the path to the saved screenshot.
 
-The [wiki](https://github.com/stefanzweifel/screeenly/wiki) holds the documentation.
+## Requirements
 
-- [API specification](https://github.com/stefanzweifel/screeenly/wiki/Use-the-API)
-- [Read about the code structure](https://github.com/stefanzweifel/screeenly/wiki/Read-the-Code)
+- Java 21 or higher
+- Chrome browser (for Selenium WebDriver)
 
+## Configuration
+
+The application can be configured through the `application.yml` file:
+
+```yaml
+screeenly:
+  storage:
+    type: local
+    path: uploads/screenshots
+  screenshot:
+    timeout: 30 # seconds
+    user-agent: screeenly-bot 2.0
+    disable-sandbox: false
+```
 
 ## Self Hosting
 
-screeenly is quite a simple PHP app. Therefore, it's quite easy to self host the application on your own server.
+### Running Locally
 
-### Self Hosting on your own Server
+1. Clone the repository
+2. Make sure you have Java 21+ installed
+3. Run `./gradlew bootRun`
+4. The application will be available at http://localhost:8080
 
-If you're comfortable running your own server follow your self-hosting guide [here](https://github.com/stefanzweifel/screeenly/wiki/Requirements-and-Install).
+### Docker
 
+You can build a Docker image using the following Dockerfile:
 
-### Deploy to Zeet
+```dockerfile
+FROM eclipse-temurin:21-jdk
 
+WORKDIR /app
 
-[![Deploy](https://deploy.zeet.co/screeenly.svg)](https://deploy.zeet.co/?url=https://github.com/stefanzweifel/screeenly)
+COPY . .
+RUN ./gradlew build -x test
 
-Otherwise, Zeet makes deploying Screeenly dead simple, just click the button above. [This guide](https://github.com/stefanzweifel/screeenly/wiki/Deploy-to-Heroku) will walk you through the configuration needed.
+# Install Chrome
+RUN apt-get update && apt-get install -y wget gnupg2 apt-utils
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+RUN echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+RUN apt-get update && apt-get install -y google-chrome-stable
 
+EXPOSE 8080
 
-### Deploy to Heroku
+CMD ["java", "-jar", "build/libs/screeenly-0.0.1-SNAPSHOT.jar"]
+```
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/stefanzweifel/screeenly/tree/master)
-
-
-If managing servers is not your thing, we've also written [a guide](https://github.com/stefanzweifel/screeenly/wiki/Deploy-to-Heroku) on how to deploy the app to Heroku.   
-By using Heroku, you can run your own version of screeenly basically for free. 
-
-## Docker Images
-
-If you're interested in a Docker version of screeenly, you can use the daily built images created by [Jacek Szafarkiewicz](https://github.com/hadogenes).
-
-- [Dockerfile](https://gitlab.com/_hadogenes_/docker/screeenly)
-- [Docker Image](https://hub.docker.com/r/hadogenes/screeenly)
-
-**Please note**: We do not provide any support for these Docker Images.
-
-# Security
+## Security
 
 If you discover a security vulnerability within this package, please e-mail us at hello@stefanzweifel.io. All security vulnerabilities will be promptly addressed.
 
-# LICENSE
+## LICENSE
 
 MIT
