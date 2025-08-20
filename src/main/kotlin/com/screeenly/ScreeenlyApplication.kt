@@ -38,17 +38,17 @@ class WebConfig : WebMvcConfigurer {
 class ScreeenlyProperties(
     var storage: ScreeenlyStorage,
     var screenshot: ScreeenlyScreenshot,
-)
-
-class ScreeenlyStorage(
-    var type: String,
-    var path: String
-)
-class ScreeenlyScreenshot(
-    var timeout: Long,
-    var userAgent: String,
-    var disableSandbox: Boolean
-)
+) {
+    class ScreeenlyStorage(
+        var type: String,
+        var path: String
+    )
+    class ScreeenlyScreenshot(
+        var timeout: Long,
+        var userAgent: String,
+        var disableSandbox: Boolean
+    )
+}
 
 data class Screenshot(
     val url: String,
@@ -79,10 +79,8 @@ class ScreeenlyApplication(
     /**
      * Generate a unique filename for the screenshot.
      */
-    private fun generateFilename(): String {
-        val uuid: String = UUID.randomUUID().toString().replace(oldValue = "-", newValue = "")
-        return "${System.currentTimeMillis()}_$uuid.png"
-    }
+    private fun generateFilename(): String =
+        "${System.currentTimeMillis()}_${UUID.randomUUID().toString().replace(oldValue = "-", newValue = "")}.png"
 
     fun capture(data: Screenshot, filename: String): Screenshot {
         // Create storage directory if it doesn't exist
