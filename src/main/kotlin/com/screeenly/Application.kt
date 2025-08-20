@@ -23,6 +23,10 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.util.UUID
 
+fun main(args: Array<String>) {
+    runApplication<Application>(*args)
+}
+
 @Configuration
 class WebConfig : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
@@ -34,16 +38,16 @@ class WebConfig : WebMvcConfigurer {
     }
 }
 
-@ConfigurationProperties(prefix = "screeenly")
-class ScreeenlyProperties(
-    var storage: ScreeenlyStorage,
-    var screenshot: ScreeenlyScreenshot,
+@ConfigurationProperties(prefix = "app")
+class AppProperties(
+    var storage: Storage,
+    var screenshot: Screenshot,
 ) {
-    class ScreeenlyStorage(
+    class Storage(
         var type: String,
         var path: String
     )
-    class ScreeenlyScreenshot(
+    class Screenshot(
         var timeout: Long,
         var userAgent: String,
         var disableSandbox: Boolean
@@ -64,9 +68,9 @@ data class Screenshot(
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @RestController
-@RequestMapping("/screenshot")
-class ScreeenlyApplication(
-    private val screeenlyProperties: ScreeenlyProperties
+@RequestMapping(value = ["/screenshot"])
+class Application(
+    private val appProperties: AppProperties
 ) {
     init {
         WebDriverManager.chromedriver().setup()
@@ -84,7 +88,7 @@ class ScreeenlyApplication(
 
     fun capture(data: Screenshot, filename: String): Screenshot {
         // Create storage directory if it doesn't exist
-        val directory = File(screeenlyProperties.storage.path)
+        val directory = File(appProperties.storage.path)
         if (!directory.exists()) {
             directory.mkdirs()
         }
@@ -94,9 +98,9 @@ class ScreeenlyApplication(
         options.addArguments("--headless")
         options.addArguments("--disable-gpu")
         options.addArguments("--window-size=${data.width ?: 1024},${data.height ?: 768}")
-        options.addArguments("--user-agent=${screeenlyProperties.screenshot.userAgent}")
+        options.addArguments("--user-agent=${appProperties.screenshot.userAgent}")
 
-        if (screeenlyProperties.screenshot.disableSandbox) {
+        if (appProperties.screenshot.disableSandbox) {
             options.addArguments("--no-sandbox")
             options.addArguments("--disable-dev-shm-usage")
         }
@@ -106,8 +110,8 @@ class ScreeenlyApplication(
 
         try {
             // Set timeouts
-            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(screeenlyProperties.screenshot.timeout))
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(screeenlyProperties.screenshot.timeout))
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(appProperties.screenshot.timeout))
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(appProperties.screenshot.timeout))
             // Set window size
             driver.manage().window().size = Dimension(data.width ?: 1024, data.height ?: 768)
             // Navigate to URL
@@ -143,7 +147,7 @@ class ScreeenlyApplication(
                 screenshotFile = driver.getScreenshotAs(OutputType.FILE)
             }
             // Save screenshot to storage
-            val fullPath = "${screeenlyProperties.storage.path}/$filename"
+            val fullPath = "${appProperties.storage.path}/$filename"
             Files.copy(screenshotFile.toPath(), Paths.get(fullPath))
             return data.also { it: Screenshot ->
                 it.path = fullPath
@@ -153,8 +157,4 @@ class ScreeenlyApplication(
             driver.quit()
         }
     }
-}
-
-fun main(args: Array<String>) {
-    runApplication<ScreeenlyApplication>(*args)
 }
